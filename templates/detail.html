@@ -1,0 +1,89 @@
+{% extends 'base.html' %}{% block title %}Detail {{ pid }}{% endblock %}
+{% block content %}
+<div class="page-title">
+  <a href="/anomali" style="font-size:13px;color:#64748b">&larr; Kembali ke Deteksi Anomali</a>
+  <h2 style="margin-top:8px">{{ info.nama_pelanggan }} &mdash; <code>{{ pid }}</code></h2>
+  <p>{{ info.alamat }} &bull; Golongan {{ info.golongan }} &bull; PDAM Cabang Semarang Timur</p>
+</div>
+<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+  <div class="stat s-blue">
+    <div class="stat-lbl">Rata-rata Pemakaian</div>
+    <div class="stat-val" style="font-size:22px">{{ "%.1f"|format(info.mean_6bln|float) }}</div>
+    <div class="stat-sub">m³ per bulan (6 bln)</div>
+  </div>
+  <div class="stat s-red">
+    <div class="stat-lbl">Z-Score Terakhir</div>
+    <div class="stat-val" style="font-size:22px">{{ "%.2f"|format(info.zscore|float) }}</div>
+    <div class="stat-sub">standar deviasi dari rata-rata</div>
+  </div>
+  <div class="stat s-amber">
+    <div class="stat-lbl">Rasio Pemakaian</div>
+    <div class="stat-val" style="font-size:22px">{{ "%.1f"|format(info.rasio_mean|float) }}x</div>
+    <div class="stat-sub">terhadap rata-rata 6 bulan</div>
+  </div>
+  <div class="stat {{ 's-red' if info.risiko=='Tinggi' else ('s-amber' if info.risiko=='Sedang' else 's-green') }}">
+    <div class="stat-lbl">Tingkat Risiko</div>
+    <div class="stat-val" style="font-size:20px">{{ info.risiko }}</div>
+    <div class="stat-sub">{{ info.jenis_anomali }}</div>
+  </div>
+</div>
+<div class="card mb20">
+  <div class="card-title">Grafik Pemakaian Air 6 Bulan (titik merah = anomali)</div>
+  <div class="chart-box" style="height:280px"><canvas id="cPlg"></canvas></div>
+</div>
+<div class="card mb20">
+  <div class="card-title">Grafik Tagihan 6 Bulan (Rp)</div>
+  <div class="chart-box" style="height:180px"><canvas id="cTagihan"></canvas></div>
+</div>
+<div class="card">
+  <div class="card-title">Riwayat Rekening 6 Bulan</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Bulan</th><th>Stand Awal</th><th>Stand Akhir</th>
+        <th>Pemakaian (m³)</th><th>Tagihan (Rp)</th>
+        <th>Rata-rata</th><th>Z-Score</th><th>Rasio</th>
+        <th>Perubahan</th><th>Skor</th><th>Status</th><th>Keterangan</th>
+      </tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr style="{{ 'background:#fff8f8' if r.is_anomali else '' }}">
+        <td style="white-space:nowrap;font-size:12px">{{ r.bulan }}</td>
+        <td style="color:#64748b">{{ r.stand_awal }}</td>
+        <td style="color:#64748b">{{ r.stand_akhir }}</td>
+        <td><strong {{ 'style="color:#dc2626"' if r.is_anomali }}>{{ r.pemakaian }}</strong></td>
+        <td style="font-size:12px">{{ "{:,.0f}".format(r.tagihan|float) }}</td>
+        <td style="color:#64748b">{{ r.mean_6bln }}</td>
+        <td><span style="font-weight:600;color:{% if r.zscore|abs>3%}#dc2626{% elif r.zscore|abs>2%}#b45309{% else %}#64748b{% endif %}">{{ r.zscore }}</span></td>
+        <td>{{ r.rasio_mean }}x</td>
+        <td style="color:{{ '#dc2626' if r.pct_change>80 else ('#15803d' if r.pct_change<-50 else '#64748b') }}">
+          {{ '+' if r.pct_change>0 else '' }}{{ r.pct_change }}%
+        </td>
+        <td><span class="badge {% if r.skor>=5%}b-red{% elif r.skor>=3%}b-amber{% elif r.skor>0%}b-yellow{% else %}b-gray{% endif %}">{{ r.skor }}</span></td>
+        <td>{% if r.is_anomali %}<span class="badge b-red">Anomali</span>{% else %}<span class="badge b-green">Normal</span>{% endif %}</td>
+        <td style="font-size:11px;color:#64748b">{{ r.alasan }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+const d  = {{ chart|safe }}
+const pc = d.anomali.map(a=>a?'#ef4444':'#3b82f6')
+const pr = d.anomali.map(a=>a?8:4)
+new Chart('cPlg',{type:'line',data:{labels:d.labels,datasets:[
+  {label:'Pemakaian (m³)',data:d.pemakaian,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',tension:.3,fill:true,pointBackgroundColor:pc,pointRadius:pr,pointHoverRadius:9},
+  {label:'Rata-rata 6 bln',data:d.mean,borderColor:'#22c55e',borderDash:[6,3],tension:.3,fill:false,pointRadius:0},
+]},options:{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}},
+    tooltip:{callbacks:{afterLabel:ctx=>d.anomali[ctx.dataIndex]?'⚠ ANOMALI':''}}},
+  scales:{x:{ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{font:{size:10}}}}}})
+
+new Chart('cTagihan',{type:'bar',data:{labels:d.labels,
+  datasets:[{label:'Tagihan (Rp)',data:d.tagihan,backgroundColor:d.anomali.map(a=>a?'#fca5a5':'#bfdbfe'),borderRadius:5}]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{font:{size:10},callback:v=>'Rp '+v.toLocaleString('id-ID')}}}}})
+</script>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}{% block title %}Upload Data{% endblock %}
+{% block content %}
+<div class="page-title">
+  <h2>Upload Data Rekening</h2>
+  <p>Tambah atau perbarui data rekening pelanggan PDAM Cabang Semarang Timur</p>
+</div>
+
+<div class="g2">
+  <div class="card">
+    <div class="card-title">Pilih File</div>
+    <form method="post" enctype="multipart/form-data">
+      <div class="drop-zone" onclick="document.getElementById('fi').click()">
+        <input type="file" id="fi" name="file" accept=".xlsx,.xls,.csv" onchange="showName(this)">
+        <div style="font-size:32px;margin-bottom:12px;color:#94a3b8">↑</div>
+        <div style="font-weight:600;color:#374151;margin-bottom:6px">Klik untuk pilih file</div>
+        <div style="font-size:12px;color:#94a3b8">Format: .xlsx, .xls, .csv</div>
+        <div id="fname" style="margin-top:10px;font-size:13px;color:#2563eb;display:none"></div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button type="submit" class="btn btn-primary">Proses &amp; Update</button>
+        <a href="/" class="btn btn-outline">Batal</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Format Kolom yang Dibutuhkan</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nama Kolom</th>
+          <th>Keterangan</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>no_langganan</code></td>
+          <td>Nomor unik pelanggan</td>
+          <td><span class="badge b-red">Wajib</span></td>
+        </tr>
+        <tr>
+          <td><code>nama_pelanggan</code></td>
+          <td>Nama lengkap pelanggan</td>
+          <td><span class="badge b-red">Wajib</span></td>
+        </tr>
+        <tr>
+          <td><code>alamat</code></td>
+          <td>Alamat pelanggan</td>
+          <td><span class="badge b-gray">Opsional</span></td>
+        </tr>
+        <tr>
+          <td><code>no_telp</code></td>
+          <td>Nomor telepon pelanggan</td>
+          <td><span class="badge b-gray">Opsional</span></td>
+        </tr>
+        <tr>
+          <td><code>status</code></td>
+          <td>Status pelanggan (T/Y)</td>
+          <td><span class="badge b-gray">Opsional</span></td>
+        </tr>
+        <tr>
+          <td><code>golongan</code></td>
+          <td>Golongan tarif (RT 4, Niaga, dll)</td>
+          <td><span class="badge b-red">Wajib</span></td>
+        </tr>
+        <tr>
+          <td><code>stand_awal</code></td>
+          <td>Stand meter awal (m³)</td>
+          <td><span class="badge b-red">Wajib</span></td>
+        </tr>
+        <tr>
+          <td><code>stand_akhir</code></td>
+          <td>Stand meter akhir (m³)</td>
+          <td><span class="badge b-red">Wajib</span></td>
+        </tr>
+        <tr>
+          <td><code>pemakaian</code></td>
+          <td>Volume pemakaian air (m³)</td>
+          <td><span class="badge b-red">Wajib</span></td>
+        </tr>
+        <tr>
+          <td><code>tagihan</code></td>
+          <td>Jumlah tagihan (Rp)</td>
+          <td><span class="badge b-red">Wajib</span></td>
+        </tr>
+        <tr>
+          <td><code>bulan</code></td>
+          <td>Nama bulan (contoh: Januari 2026)</td>
+          <td><span class="badge b-red">Wajib</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+function showName(i){
+  const el=document.getElementById('fname')
+  if(i.files.length){el.textContent='✓ '+i.files[0].name;el.style.display='block'}
+}
+</script>
+{% endblock %}

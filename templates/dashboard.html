@@ -1,0 +1,92 @@
+{% extends 'base.html' %}{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-title">
+  <h2>Dashboard Monitoring Anomali</h2>
+</div>
+<div class="stats">
+  <div class="stat s-blue">
+    <div class="stat-lbl">Total Pelanggan</div>
+    <div class="stat-val">{{ "{:,}".format(summary.total_pelanggan) }}</div>
+    <div class="stat-sub">dalam data 6 bulan</div>
+  </div>
+  <div class="stat s-red">
+    <div class="stat-lbl">Terdeteksi Anomali</div>
+    <div class="stat-val">{{ "{:,}".format(summary.total_anomali) }}</div>
+    <div class="stat-sub">{{ summary.pct_anomali }}% dari total rekening</div>
+  </div>
+  <div class="stat s-amber">
+    <div class="stat-lbl">Pelanggan Berisiko</div>
+    <div class="stat-val">{{ "{:,}".format(summary.pelanggan_anomali) }}</div>
+    <div class="stat-sub">perlu pengecekan lapangan</div>
+  </div>
+  <div class="stat s-green">
+    <div class="stat-lbl">Total Rekening Diproses</div>
+    <div class="stat-val">{{ "{:,}".format(summary.total_data) }}</div>
+    <div class="stat-sub">baris data rekening</div>
+  </div>
+</div>
+<div class="g2 mb20">
+  <div class="card">
+    <div class="card-title">Distribusi Tingkat Risiko</div>
+    <div class="chart-box"><canvas id="cRisiko"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Jenis Anomali Pemakaian Air</div>
+    <div class="chart-box"><canvas id="cJenis"></canvas></div>
+  </div>
+</div>
+<div class="g2 mb20">
+  <div class="card">
+    <div class="card-title">Anomali per Golongan Tarif</div>
+    <div class="chart-box"><canvas id="cGolongan"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Anomali per Bulan</div>
+    <div class="chart-box"><canvas id="cBulan"></canvas></div>
+  </div>
+</div>
+<div class="card mb20">
+  <div class="card-title">Upload Data Rekening</div>
+  <form method="post" action="/upload" enctype="multipart/form-data" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div class="drop-zone" style="padding:20px 28px;flex:1;min-width:260px" onclick="document.getElementById('fi_dash').click()">
+      <input type="file" id="fi_dash" name="file" accept=".xlsx,.xls,.csv" onchange="showDashName(this)">
+      <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+        <span style="font-size:22px;color:#94a3b8">↑</span>
+        <div>
+          <div style="font-weight:600;color:#374151;font-size:13px">Klik untuk pilih file</div>
+          <div style="font-size:11px;color:#94a3b8">Format: .xlsx, .xls, .csv</div>
+        </div>
+      </div>
+      <div id="fname_dash" style="margin-top:8px;font-size:13px;color:#2563eb;text-align:center;display:none"></div>
+    </div>
+    <button type="submit" class="btn btn-primary" style="height:fit-content">Proses &amp; Update</button>
+  </form>
+</div>
+<script>
+function showDashName(i){const el=document.getElementById('fname_dash');if(i.files.length){el.textContent='✓ '+i.files[0].name;el.style.display='block'}}
+const C=['#3b82f6','#ef4444','#f59e0b','#22c55e','#8b5cf6','#ec4899','#14b8a6','#f97316']
+const base={responsive:true,maintainAspectRatio:false}
+const sc={scales:{x:{ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{font:{size:10}}}}}
+const lg={plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}}}
+async function j(u){return(await fetch(u)).json()}
+;(async()=>{
+  const[risiko,jenis,gol,bln]=await Promise.all([
+    j('/api/chart/risiko'),j('/api/chart/jenis'),
+    j('/api/chart/golongan'),j('/api/chart/bulan')
+  ])
+  new Chart('cRisiko',{type:'doughnut',data:{labels:risiko.labels,
+    datasets:[{data:risiko.values,backgroundColor:['#ef4444','#f59e0b','#eab308','#22c55e'],borderWidth:3,borderColor:'#fff'}]},
+    options:{...base,...lg}})
+  new Chart('cJenis',{type:'doughnut',data:{labels:jenis.labels,
+    datasets:[{data:jenis.values,backgroundColor:['#ef4444','#3b82f6','#8b5cf6'],borderWidth:3,borderColor:'#fff'}]},
+    options:{...base,...lg}})
+  new Chart('cGolongan',{type:'bar',data:{labels:gol.labels,
+    datasets:[{label:'Jumlah Anomali',data:gol.values,backgroundColor:C,borderRadius:5}]},
+    options:{...base,...sc,plugins:{legend:{display:false}}}})
+  new Chart('cBulan',{type:'bar',data:{labels:bln.labels,datasets:[
+    {label:'Total Rekening',data:bln.total,backgroundColor:'#bfdbfe',borderRadius:4},
+    {label:'Anomali',data:bln.anomali,backgroundColor:'#fca5a5',borderRadius:4}
+  ]},options:{...base,...sc,...lg}})
+})()
+</script>
+{% endblock %}

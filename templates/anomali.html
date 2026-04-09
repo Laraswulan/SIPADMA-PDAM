@@ -1,0 +1,73 @@
+{% extends 'base.html' %}{% block title %}Deteksi Anomali{% endblock %}
+{% block content %}
+<div class="page-title">
+  <h2>Deteksi Anomali Pemakaian Air</h2>
+</div>
+<div class="card mb20">
+  <form method="get" class="filter-bar">
+    <select name="golongan">
+      <option value="">Semua Golongan</option>
+      {% for g in filters.golongan_list %}<option value="{{ g }}" {{ 'selected' if filters.sel_golongan==g }}>{{ g }}</option>{% endfor %}
+    </select>
+    <select name="risiko">
+      <option value="">Semua Risiko</option>
+      {% for r in ['Tinggi','Sedang','Rendah'] %}<option value="{{ r }}" {{ 'selected' if filters.sel_risiko==r }}>{{ r }}</option>{% endfor %}
+    </select>
+    <select name="jenis">
+      <option value="">Semua Jenis</option>
+      {% for j in filters.jenis_list %}<option value="{{ j }}" {{ 'selected' if filters.sel_jenis==j }}>{{ j }}</option>{% endfor %}
+    </select>
+    <select name="bulan">
+      <option value="">Semua Bulan</option>
+      {% for b in filters.bulan_list %}<option value="{{ b }}" {{ 'selected' if filters.sel_bulan==b }}>{{ b }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-primary" type="submit">Filter</button>
+    <a href="/anomali" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+<div class="card">
+  <div class="card-title">{{ "{:,}".format(pagination.total) }} anomali ditemukan &mdash; Hal. {{ pagination.page }}/{{ pagination.pages }}</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>No. Langganan</th><th>Nama Pelanggan</th><th>Alamat</th><th>Golongan</th>
+        <th>Bulan</th><th>Stand Awal</th><th>Stand Akhir</th>
+        <th>Pemakaian (m³)</th><th>Tagihan (Rp)</th>
+        <th>Rata-rata</th><th>Z-Score</th><th>Skor</th><th>Risiko</th><th>Jenis</th><th>Keterangan</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td><code>{{ r.no_langganan }}</code></td>
+        <td style="white-space:nowrap">{{ r.nama_pelanggan }}</td>
+        <td style="font-size:12px;color:#64748b">{{ r.alamat }}</td>
+        <td><span class="badge b-gray">{{ r.golongan }}</span></td>
+        <td style="white-space:nowrap;font-size:12px">{{ r.bulan }}</td>
+        <td style="color:#64748b">{{ r.stand_awal }}</td>
+        <td style="color:#64748b">{{ r.stand_akhir }}</td>
+        <td><strong {% if r.risiko=='Tinggi' %}style="color:#dc2626"{% endif %}>{{ r.pemakaian }}</strong></td>
+        <td style="font-size:12px">{{ "{:,.0f}".format(r.tagihan|float) }}</td>
+        <td style="color:#64748b">{{ r.mean_6bln }}</td>
+        <td><span style="font-weight:600;color:{% if r.zscore|abs>3%}#dc2626{% elif r.zscore|abs>2%}#b45309{% else %}#64748b{% endif %}">{{ r.zscore }}</span></td>
+        <td><span class="badge {% if r.skor>=5%}b-red{% elif r.skor>=3%}b-amber{% else %}b-yellow{% endif %}">{{ r.skor }}</span></td>
+        <td>{% if r.risiko=='Tinggi' %}<span class="badge b-red">Tinggi</span>
+            {% elif r.risiko=='Sedang' %}<span class="badge b-amber">Sedang</span>
+            {% else %}<span class="badge b-yellow">Rendah</span>{% endif %}</td>
+        <td><span class="badge b-blue" style="font-size:10px">{{ r.jenis_anomali }}</span></td>
+        <td style="font-size:11px;color:#64748b;max-width:180px">{{ r.alasan }}</td>
+        <td><a href="/pelanggan/{{ r.no_langganan }}" class="btn btn-outline btn-sm">Detail</a></td>
+      </tr>
+      {% else %}<tr><td colspan="16" style="text-align:center;padding:40px;color:#94a3b8">Tidak ada anomali ditemukan</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagination.pages>1 %}
+  <div class="pagination">
+    {% if pagination.page>1 %}<a href="?page={{ pagination.page-1 }}&golongan={{ filters.sel_golongan }}&risiko={{ filters.sel_risiko }}&jenis={{ filters.sel_jenis }}&bulan={{ filters.sel_bulan }}">&laquo;</a>{% endif %}
+    <span class="active">{{ pagination.page }}</span>
+    <span style="color:#94a3b8">/ {{ pagination.pages }}</span>
+    {% if pagination.page<pagination.pages %}<a href="?page={{ pagination.page+1 }}&golongan={{ filters.sel_golongan }}&risiko={{ filters.sel_risiko }}&jenis={{ filters.sel_jenis }}&bulan={{ filters.sel_bulan }}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

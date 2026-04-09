@@ -1,0 +1,56 @@
+{% extends 'base.html' %}{% block title %}Semua Pelanggan{% endblock %}
+{% block content %}
+<div class="page-title">
+  <h2>Semua Pelanggan</h2>
+</div>
+<div class="card mb20">
+  <form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ search }}" placeholder="Cari nama / no. langganan..." style="width:250px">
+    <select name="golongan">
+      <option value="">Semua Golongan</option>
+      {% for g in filters.golongan_list %}<option value="{{ g }}" {{ 'selected' if filters.sel_golongan==g }}>{{ g }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-primary" type="submit">Cari</button>
+    <a href="/pelanggan" class="btn btn-outline">Reset</a>
+  </form>
+</div>
+<div class="card">
+  <div class="card-title">{{ "{:,}".format(pagination.total) }} pelanggan</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>No. Langganan</th><th>Nama Pelanggan</th><th>Alamat</th>
+        <th>Golongan</th><th>Rata-rata Pemakaian</th>
+        <th>Anomali (bulan)</th><th>Z-Score Maks</th><th>Status</th><th></th>
+      </tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <td><code>{{ r.no_langganan }}</code></td>
+        <td>{{ r.nama_pelanggan }}</td>
+        <td style="font-size:12px;color:#64748b">{{ r.alamat }}</td>
+        <td><span class="badge b-gray">{{ r.golongan }}</span></td>
+        <td>{{ r.rata_pemakaian }} m³</td>
+        <td>{% if r.total_anomali>0 %}<span class="badge b-red">{{ r.total_anomali }} bulan</span>{% else %}<span class="badge b-green">0</span>{% endif %}</td>
+        <td>{{ r.max_zscore }}</td>
+        <td>
+          {% if r.total_anomali>3 %}<span class="badge b-red">Prioritas Cek</span>
+          {% elif r.total_anomali>0 %}<span class="badge b-amber">Perlu Perhatian</span>
+          {% else %}<span class="badge b-green">Normal</span>{% endif %}
+        </td>
+        <td><a href="/pelanggan/{{ r.no_langganan }}" class="btn btn-outline btn-sm">Detail</a></td>
+      </tr>
+      {% else %}<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8">Tidak ada data</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagination.pages>1 %}
+  <div class="pagination">
+    {% if pagination.page>1 %}<a href="?page={{ pagination.page-1 }}&q={{ search }}&golongan={{ filters.sel_golongan }}">&laquo;</a>{% endif %}
+    <span class="active">{{ pagination.page }}</span>
+    <span style="color:#94a3b8">/ {{ pagination.pages }}</span>
+    {% if pagination.page<pagination.pages %}<a href="?page={{ pagination.page+1 }}&q={{ search }}&golongan={{ filters.sel_golongan }}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

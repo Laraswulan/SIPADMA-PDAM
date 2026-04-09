@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIPADMA — {% block title %}{% endblock %}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:#0f172a}
+a{text-decoration:none;color:inherit}
+.sidebar{position:fixed;left:0;top:0;width:230px;height:100vh;background:#0f2744;display:flex;flex-direction:column;z-index:200}
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-logo h1{color:#fff;font-size:15px;font-weight:700;letter-spacing:.3px}
+.sb-logo .sb-sub{color:#7dd3fc;font-size:10px;margin-top:4px;line-height:1.5}
+.sb-logo .sb-cabang{color:#fbbf24;font-size:10px;font-weight:600;margin-top:5px;padding:3px 8px;background:rgba(251,191,36,.12);border-radius:4px;display:inline-block}
+.sb-nav{padding:10px 0;flex:1}
+.sb-nav a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:#94a3b8;font-size:13px;font-weight:500;transition:all .15s;border-left:3px solid transparent}
+.sb-nav a:hover{color:#e2e8f0;background:rgba(255,255,255,.05)}
+.sb-nav a.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:#38bdf8}
+.sb-icon{font-size:14px;opacity:.8}
+.sb-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#475569;line-height:1.6}
+.main{margin-left:230px;padding:28px;min-height:100vh}
+.page-title{margin-bottom:24px}
+.page-title h2{font-size:21px;font-weight:700;color:#0f172a}
+.page-title p{color:#64748b;font-size:13px;margin-top:4px}
+.flash{padding:12px 16px;border-radius:8px;margin-bottom:20px;font-size:13px;font-weight:500}
+.flash-success{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.flash-error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.07);padding:22px}
+.card-title{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat{background:#fff;border-radius:14px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-top:3px solid #e2e8f0}
+.stat.s-blue{border-color:#3b82f6}.stat.s-red{border-color:#ef4444}
+.stat.s-amber{border-color:#f59e0b}.stat.s-green{border-color:#22c55e}
+.stat-lbl{font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-val{font-size:30px;font-weight:800;color:#0f172a;line-height:1}
+.stat-sub{font-size:11px;color:#94a3b8;margin-top:5px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{padding:10px 14px;background:#f8fafc;color:#64748b;font-weight:700;font-size:11px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;text-transform:uppercase;letter-spacing:.4px}
+td{padding:10px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#f8fafc}
+.badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-red{background:#fef2f2;color:#dc2626}.b-amber{background:#fffbeb;color:#b45309}
+.b-yellow{background:#fefce8;color:#854d0e}.b-green{background:#f0fdf4;color:#15803d}
+.b-blue{background:#eff6ff;color:#1d4ed8}.b-gray{background:#f8fafc;color:#475569;border:1px solid #e2e8f0}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s}
+.btn-primary{background:#0f2744;color:#fff}.btn-primary:hover{background:#1e40af}
+.btn-outline{background:#fff;color:#374151;border:1px solid #e2e8f0}.btn-outline:hover{background:#f8fafc}
+.btn-sm{padding:5px 12px;font-size:12px}
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.filter-bar select,.filter-bar input{padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;color:#0f172a;outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:#3b82f6}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.mb20{margin-bottom:20px}
+.chart-box{position:relative;height:250px}
+.pagination{display:flex;align-items:center;gap:8px;margin-top:20px;font-size:13px}
+.pagination a,.pagination span{padding:6px 12px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;color:#374151}
+.pagination a:hover{background:#f1f5f9}
+.pagination .active{background:#0f2744;color:#fff;border-color:#0f2744}
+.drop-zone{border:2px dashed #cbd5e1;border-radius:12px;padding:48px 24px;text-align:center;background:#f8fafc;transition:border-color .2s;cursor:pointer}
+.drop-zone:hover{border-color:#3b82f6;background:#eff6ff}
+.drop-zone input{display:none}
+code{font-family:'Courier New',monospace;font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#1e40af}
+@media(max-width:1024px){.stats{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sb-logo">
+    <h1>SIPADMA</h1>
+    <div class="sb-sub">Sistem Deteksi Anomali<br>Pemakaian Air Pelanggan</div>
+    <div class="sb-cabang">PDAM Cabang Semarang Timur</div>
+  </div>
+  <nav class="sb-nav">
+    <a href="/"          class="{{ 'active' if request.path=='/' else '' }}">
+      <span class="sb-icon">▪</span> Dashboard
+    </a>
+    <a href="/anomali"   class="{{ 'active' if request.path=='/anomali' else '' }}">
+      <span class="sb-icon">▲</span> Deteksi Anomali
+    </a>
+    <a href="/pelanggan" class="{{ 'active' if request.path=='/pelanggan' else '' }}">
+      <span class="sb-icon">○</span> Semua Pelanggan
+    </a>
+
+  </nav>
+  <div class="sb-footer">SIPADMA v1.0 &mdash; Z-Score + Rule-Based<br>&copy; PDAM Cabang Semarang Timur</div>
+</aside>
+<main class="main">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>
